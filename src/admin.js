@@ -934,13 +934,17 @@ document.addEventListener('DOMContentLoaded', function () {
       e.preventDefault();
       var pw = $('passwd').value;
       var errEl = $('login-error');
-      if (pw === getStoredPw()) {
-        sessionStorage.setItem('anifix_auth', '1');
-        errEl.textContent = '';
-        showAdmin();
-      } else {
-        errEl.textContent = '// Zugang verweigert.';
-        $('passwd').value = '';
+      try {
+        if (pw === getStoredPw()) {
+          sessionStorage.setItem('anifix_auth', '1');
+          if (errEl) errEl.textContent = '';
+          showAdmin();
+        } else {
+          if (errEl) errEl.textContent = '// Zugang verweigert.';
+          $('passwd').value = '';
+        }
+      } catch (err) {
+        if (errEl) errEl.textContent = '// Fehler: ' + err.message;
       }
     });
   }
