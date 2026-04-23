@@ -16,6 +16,34 @@ const crypto   = require('crypto');
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
+// ---- Proxy-aware setup ----
+// Trust X-Forwarded-* headers from nginx reverse proxy
+app.set('trust proxy', 1);
+
+// Remove fingerprinting header
+app.disable('x-powered-by');
+
+// Security + CSP headers compatible with nginx reverse proxy
+// Allows CDN resources (fonts, FA icons, three.js) used in the frontend
+app.use(function (req, res, next) {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+  res.setHeader(
+    'Content-Security-Policy',
+    [
+      "default-src 'self'",
+      "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net",
+      "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com",
+      "font-src 'self' https://fonts.gstatic.com https://cdnjs.cloudflare.com",
+      "img-src 'self' data: blob:",
+      "media-src 'self' blob:",
+      "connect-src 'self' https://www.youtube.com https://noembed.com https://youtube.com",
+      "frame-src 'none'"
+    ].join('; ')
+  );
+  next();
+});
+
 // ---- Resolve yt-dlp ----
 // Prefer local exe in project folder, fall back to PATH
 const LOCAL_YTDLP  = path.join(__dirname, 'yt-dlp.exe');
