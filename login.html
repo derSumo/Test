@@ -1,0 +1,2201 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AniFix | Admin</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" crossorigin="anonymous" referrerpolicy="no-referrer" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    .splash {
+      position: fixed;
+      inset: 0;
+      z-index: 10000;
+      background: #05080f;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.5rem;
+      transition: opacity 0.6s ease, visibility 0.6s ease;
+    }
+
+    .splash.hide {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .splash-text {
+      font-family: 'Sora', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: #60a5fa;
+      opacity: 0;
+      animation: splash-text-in 0.6s 0.3s ease forwards;
+    }
+
+    @keyframes splash-text-in {
+      from { opacity: 0; transform: translateY(8px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes infinity-loader-travel {
+      0%   { stroke-dashoffset: 0; }
+      100% { stroke-dashoffset: -100; }
+    }
+
+    .splash svg {
+      opacity: 0;
+      animation: splash-svg-in 0.5s 0.1s ease forwards;
+    }
+
+    @keyframes splash-svg-in {
+      from { opacity: 0; transform: scale(0.85); }
+      to   { opacity: 1; transform: scale(1); }
+    }
+
+    :root {
+      --bg:           #05080f;
+      --card-bg:      rgba(8, 14, 28, 0.68);
+      --border:       rgba(255, 255, 255, 0.07);
+      --text:         #e2e8f0;
+      --text-dim:     #94a3b8;
+      --text-dimmer:  #64748b;
+      --accent:       #60a5fa;
+      --accent2:      #818cf8;
+      --red:          #f87171;
+      --green:        #4ade80;
+    }
+
+    html, body {
+      min-height: 100vh;
+      font-family: 'Sora', sans-serif;
+      background-color: var(--bg);
+      color: var(--text);
+      overflow-x: hidden;
+    }
+
+    body {
+      background-image:
+        radial-gradient(ellipse 70% 50% at 15% -5%,  rgba(96, 165, 250, 0.09) 0%, transparent 65%),
+        radial-gradient(ellipse 55% 40% at 85% 105%, rgba(129, 140, 248, 0.08) 0%, transparent 65%);
+      display: flex;
+      align-items: safe center;
+      justify-content: center;
+      padding: 2.5rem 1rem;
+      overflow-y: auto;
+        position: relative;
+        isolation: isolate;
+    }
+
+      #aurora-bg {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        opacity: 0.16;
+        mix-blend-mode: screen;
+        filter: saturate(120%) blur(10px);
+        pointer-events: none;
+      }
+
+      #aurora-bg canvas {
+        width: 100% !important;
+        height: 100% !important;
+        display: block;
+      }
+
+    /* ---- Card ---- */
+    .card {
+      width: 100%;
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      backdrop-filter: blur(22px);
+      -webkit-backdrop-filter: blur(22px);
+      box-shadow:
+        0 40px 80px -16px rgba(0, 0, 0, 0.65),
+        0 0 0 1px rgba(255, 255, 255, 0.035),
+        inset 0 1px 0 rgba(255, 255, 255, 0.06);
+      position: relative;
+      z-index: 2;
+      overflow: visible;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 50%;
+      transform: translateX(-50%);
+      width: 55%;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(96, 165, 250, 0.45), transparent);
+    }
+
+    .login-card  { max-width: 420px; }
+    .admin-card  {
+      max-width: 1280px;
+      opacity: 0;
+      transform: translateY(28px) scale(0.98);
+      filter: blur(14px);
+      transition: opacity 0.45s ease, transform 0.65s cubic-bezier(0.16, 1, 0.3, 1), filter 0.45s ease;
+    }
+
+    .panel-screen {
+      transition: opacity 0.4s ease, transform 0.55s cubic-bezier(0.16, 1, 0.3, 1), filter 0.4s ease;
+      will-change: transform, opacity, filter;
+    }
+
+    .panel-screen.is-hidden {
+      opacity: 0;
+      transform: translateY(-18px) scale(0.97);
+      filter: blur(14px);
+      pointer-events: none;
+    }
+
+    .panel-screen.is-visible {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+      filter: blur(0);
+      pointer-events: auto;
+    }
+
+    .card-inner { padding: 2.5rem 2.25rem; }
+
+    .admin-card .card-inner {
+      padding: 1.4rem;
+    }
+
+    @media (min-width: 500px) {
+      .card-inner { padding: 2.75rem 3rem; }
+      .admin-card .card-inner { padding: 1.7rem; }
+    }
+
+    /* ---- Typography ---- */
+    h2 {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: #fff;
+      text-align: center;
+      margin-bottom: 0.25rem;
+    }
+
+    .subtitle {
+      text-align: center;
+      font-size: 0.72rem;
+      font-weight: 600;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 2rem;
+    }
+
+    /* ---- Form ---- */
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-bottom: 1rem;
+    }
+
+    .form-group label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: var(--text-dim);
+    }
+
+    .form-group input[type="password"],
+    .form-group input[type="url"],
+    .form-group input[type="text"] {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.7rem 0.9rem;
+      font-family: 'Sora', sans-serif;
+      font-size: 0.85rem;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+      width: 100%;
+    }
+
+    .form-group input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.12);
+    }
+
+    .textarea-input {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.7rem 0.9rem;
+      font-family: 'Sora', sans-serif;
+      font-size: 0.8rem;
+      color: #fff;
+      outline: none;
+      width: 100%;
+      resize: vertical;
+      min-height: 6rem;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+
+    .textarea-input:focus {
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.12);
+    }
+
+    .form-error {
+      font-size: 0.75rem;
+      color: var(--red);
+      text-align: center;
+      min-height: 1.1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    /* ---- Buttons ---- */
+    .btn-primary {
+      width: 100%;
+      padding: 0.75rem;
+      background: rgba(96, 165, 250, 0.12);
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      font-family: 'Sora', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--accent);
+      cursor: pointer;
+      transition: background 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-primary:hover {
+      background: rgba(96, 165, 250, 0.2);
+      box-shadow: 0 0 24px rgba(96, 165, 250, 0.18);
+    }
+
+    .btn-secondary {
+      padding: 0.5rem 1rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-family: 'Sora', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text);
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+    }
+
+    .btn-secondary:hover { border-color: var(--accent); color: var(--accent); }
+
+    .back-link {
+      display: block;
+      text-align: center;
+      margin-top: 1.25rem;
+      font-size: 0.78rem;
+      color: var(--text-dimmer);
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+
+    .back-link:hover { color: var(--accent); }
+
+    /* ---- Admin sections ---- */
+    .admin-shell {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .admin-hero {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 1.1rem 1.15rem;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      background:
+        linear-gradient(135deg, rgba(96, 165, 250, 0.12), rgba(129, 140, 248, 0.03)),
+        rgba(255, 255, 255, 0.028);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .admin-hero::after {
+      content: '';
+      position: absolute;
+      inset: auto -8% -40% auto;
+      width: 14rem;
+      height: 14rem;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(96, 165, 250, 0.2), transparent 68%);
+      filter: blur(10px);
+      pointer-events: none;
+    }
+
+    .admin-kicker {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.35rem;
+    }
+
+    .admin-subtitle {
+      text-align: left;
+      margin: 0.4rem 0 0;
+      max-width: 38rem;
+      color: var(--text-dim);
+      font-size: 0.8rem;
+      letter-spacing: 0.02em;
+      text-transform: none;
+    }
+
+    .admin-overview {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      gap: 0.7rem;
+      position: relative;
+      z-index: 1;
+    }
+
+    .overview-pill {
+      min-width: 8.6rem;
+      padding: 0.8rem 0.9rem;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(5, 8, 15, 0.4);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+    }
+
+    .overview-pill span {
+      display: block;
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-dimmer);
+      margin-bottom: 0.3rem;
+    }
+
+    .overview-pill strong {
+      font-size: 1.05rem;
+      color: #fff;
+    }
+
+    .admin-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 1rem;
+      align-items: start;
+    }
+
+    .admin-column {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+
+    .admin-group {
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 20px;
+      background: rgba(255, 255, 255, 0.03);
+      overflow: hidden;
+      box-shadow: 0 24px 70px -36px rgba(0, 0, 0, 0.6);
+    }
+
+    .admin-group-toggle {
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1rem 1.1rem;
+      border: none;
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent);
+      color: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .admin-group-summary {
+      display: flex;
+      flex-direction: column;
+      gap: 0.22rem;
+    }
+
+    .admin-group-summary strong {
+      font-size: 1rem;
+      color: #fff;
+    }
+
+    .admin-group-summary small {
+      color: var(--text-dimmer);
+      font-size: 0.73rem;
+    }
+
+    .admin-group-eyebrow {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--accent);
+    }
+
+    .admin-group-icon {
+      width: 2rem;
+      height: 2rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--accent);
+      background: rgba(5, 8, 15, 0.45);
+      transition: transform 0.35s ease;
+      flex-shrink: 0;
+    }
+
+    .admin-group.open .admin-group-icon {
+      transform: rotate(180deg);
+    }
+
+    .admin-group-body {
+      display: grid;
+      grid-template-rows: 0fr;
+      transition: grid-template-rows 0.42s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .admin-group.open .admin-group-body {
+      grid-template-rows: 1fr;
+    }
+
+    .admin-group-body-inner {
+      overflow: hidden;
+      padding: 0 1.1rem 1.1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.9rem;
+    }
+
+    .admin-section {
+      padding: 1rem;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      background: rgba(0, 0, 0, 0.18);
+    }
+
+    .admin-section:last-child { margin-bottom: 0; }
+
+    .section-title {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 0.85rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .template-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-top: 0.8rem;
+    }
+
+    .template-chip {
+      border: 1px solid rgba(96, 165, 250, 0.18);
+      background: rgba(96, 165, 250, 0.08);
+      color: var(--accent);
+      border-radius: 999px;
+      padding: 0.4rem 0.75rem;
+      font-family: 'Sora', sans-serif;
+      font-size: 0.67rem;
+      font-weight: 700;
+      letter-spacing: 0.04em;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .template-chip:hover {
+      transform: translateY(-1px);
+      background: rgba(96, 165, 250, 0.13);
+      border-color: rgba(96, 165, 250, 0.28);
+    }
+
+    .feature-list {
+      display: grid;
+      gap: 0.6rem;
+    }
+
+    .feature-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 0.8rem 0.95rem;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      background: rgba(255, 255, 255, 0.025);
+      transition: opacity .22s ease, background .22s ease;
+    }
+
+    .feature-item.is-off {
+      opacity: 0.42;
+      background: rgba(255,255,255,.01);
+    }
+
+    .feature-item.is-off:hover {
+      opacity: 0.65;
+    }
+
+    .feature-copy {
+      min-width: 0;
+    }
+
+    .feature-copy strong {
+      display: block;
+      font-size: 0.82rem;
+      color: #fff;
+      margin-bottom: 0.18rem;
+    }
+
+    .feature-copy small {
+      display: block;
+      font-size: 0.7rem;
+      color: var(--text-dimmer);
+      line-height: 1.45;
+    }
+
+    /* ==== Icon Picker ==== */
+    .ip-wrap { position: relative; display: inline-flex; align-items: center; gap: 4px; }
+    .ip-trigger {
+      display: flex; align-items: center; justify-content: center;
+      width: 32px; height: 32px;
+      border-radius: 7px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.6);
+      cursor: pointer;
+      font-size: .75rem;
+      transition: background .15s;
+      flex-shrink: 0;
+    }
+    .ip-trigger:hover { background: rgba(96,165,250,.15); color: #60a5fa; }
+    .ip-popup {
+      position: absolute;
+      top: 110%; left: 0;
+      z-index: 9000;
+      width: 280px;
+      background: rgba(12, 16, 30, 0.96);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 12px;
+      box-shadow: 0 12px 40px rgba(0,0,0,.6);
+      backdrop-filter: blur(18px);
+      padding: 8px;
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .ip-popup.open { display: flex; }
+    .ip-search {
+      width: 100%; background: rgba(0,0,0,.3);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 7px; color: #fff;
+      font-size: .73rem; padding: 5px 9px;
+      outline: none;
+    }
+    .ip-search::placeholder { color: rgba(255,255,255,.28); }
+    .ip-grid {
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      gap: 3px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .ip-item {
+      display: flex; align-items: center; justify-content: center;
+      width: 30px; height: 30px;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: .9rem;
+      transition: background .12s;
+      color: rgba(255,255,255,.75);
+    }
+    .ip-item:hover { background: rgba(96,165,250,.2); color: #60a5fa; }
+    .ip-item i { pointer-events: none; font-size: .82rem; }
+    .ip-tabs { display: flex; gap: 3px; }
+    .ip-tab {
+      flex: 1; padding: 4px 0;
+      font-size: .65rem; letter-spacing: .06em; text-transform: uppercase;
+      border-radius: 6px; border: 1px solid rgba(255,255,255,.08);
+      background: transparent; color: rgba(255,255,255,.4);
+      cursor: pointer; text-align: center;
+    }
+    .ip-tab.active { background: rgba(96,165,250,.15); color: #60a5fa; border-color: rgba(96,165,250,.2); }
+
+    /* ==== Toast Config ==== */
+    .toast-config-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.6rem;
+    }
+    .toast-config-grid .form-group { margin: 0; }
+
+    /* ==== Country / Flag ==== */
+    .location-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+    }
+    .location-row select {
+      flex-shrink: 0;
+      width: auto;
+      font-size: 1.1rem;
+      padding: 0.38rem 0.45rem;
+      border-radius: 7px;
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(0,0,0,.35);
+      color: #fff;
+      cursor: pointer;
+      outline: none;
+    }
+    .location-row select option { background: #14182a; }
+
+    .switch {
+      position: relative;
+      display: inline-flex;
+      width: 3.35rem;
+      height: 1.9rem;
+      flex-shrink: 0;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .switch-slider {
+      position: absolute;
+      inset: 0;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      background: rgba(0, 0, 0, 0.28);
+      transition: background 0.24s ease, border-color 0.24s ease, box-shadow 0.24s ease;
+    }
+
+    .switch-slider::before {
+      content: '';
+      position: absolute;
+      left: 0.22rem;
+      top: 50%;
+      width: 1.35rem;
+      height: 1.35rem;
+      border-radius: 50%;
+      background: #fff;
+      transform: translateY(-50%);
+      transition: transform 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28);
+    }
+
+    .switch input:checked + .switch-slider {
+      background: rgba(96, 165, 250, 0.26);
+      border-color: rgba(96, 165, 250, 0.36);
+      box-shadow: 0 0 24px rgba(96, 165, 250, 0.12);
+    }
+
+    .switch input:checked + .switch-slider::before {
+      transform: translate(1.45rem, -50%);
+    }
+
+    .builder-list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.55rem;
+    }
+
+    .builder-item {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.8rem 0.95rem;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.07);
+      background: rgba(255, 255, 255, 0.028);
+      cursor: grab;
+      user-select: none;
+    }
+
+    .builder-item.dragging {
+      opacity: 0.45;
+      border-color: rgba(96, 165, 250, 0.26);
+    }
+
+    .builder-handle {
+      color: var(--accent);
+      font-size: 0.95rem;
+      flex-shrink: 0;
+    }
+
+    .builder-copy strong {
+      display: block;
+      font-size: 0.8rem;
+      color: #fff;
+      margin-bottom: 0.14rem;
+    }
+
+    .builder-copy small {
+      display: block;
+      font-size: 0.69rem;
+      color: var(--text-dimmer);
+      line-height: 1.45;
+    }
+
+    .builder-hint {
+      font-size: 0.68rem;
+      color: var(--text-dimmer);
+      margin-top: 0.55rem;
+    }
+
+    /* Avatar */
+    .avatar-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .avatar-preview {
+      width: 56px;
+      height: 56px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.1);
+      background: linear-gradient(140deg, #1a2f50, #0e1220);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: var(--accent);
+      flex-shrink: 0;
+      overflow: hidden;
+    }
+
+    .avatar-preview img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      border-radius: 50%;
+    }
+
+    .avatar-hint {
+      font-size: 0.65rem;
+      color: var(--text-dimmer);
+      margin-top: 0.3rem;
+    }
+
+    input[type="file"] { display: none; }
+
+    /* Music list */
+    .music-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .music-item {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.55rem 0.75rem;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.75rem;
+    }
+
+    .track-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .track-type-badge {
+      font-size: 0.6rem;
+      font-weight: 700;
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      letter-spacing: 0.05em;
+      flex-shrink: 0;
+    }
+
+    .track-type-badge.yt  { background: rgba(255, 60, 0, 0.15); color: #ff6040; border: 1px solid rgba(255,60,0,0.25); }
+    .track-type-badge.loc { background: rgba(96,165,250,0.08);  color: var(--accent); border: 1px solid rgba(96,165,250,0.18); }
+
+    .btn-remove {
+      background: none;
+      border: none;
+      color: var(--red);
+      cursor: pointer;
+      font-size: 0.85rem;
+      opacity: 0.5;
+      transition: opacity 0.2s;
+      padding: 0;
+    }
+
+    .btn-remove:hover { opacity: 1; }
+
+    .music-empty {
+      font-size: 0.75rem;
+      color: var(--text-dimmer);
+      padding: 0.4rem 0;
+    }
+
+    .yt-input-row {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 0.6rem;
+    }
+
+    .yt-input-row input {
+      flex: 1;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.55rem 0.75rem;
+      font-family: 'Sora', sans-serif;
+      font-size: 0.75rem;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .yt-input-row input:focus { border-color: var(--accent); }
+    .yt-input-row input::placeholder { color: var(--text-dimmer); }
+
+    .yt-status {
+      font-size: 0.68rem;
+      color: var(--accent);
+      margin-top: 0.35rem;
+      min-height: 1rem;
+    }
+
+    .local-row {
+      display: flex;
+      gap: 0.5rem;
+      align-items: center;
+      margin-top: 0.5rem;
+    }
+
+    .local-hint {
+      font-size: 0.62rem;
+      color: var(--text-dimmer);
+    }
+
+    /* Footer */
+    hr.section-divider {
+      border: none;
+      height: 1px;
+      background: var(--border);
+      margin: 1.5rem 0;
+    }
+
+    .admin-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.4rem 0.2rem 0;
+    }
+
+    .btn-logout {
+      font-family: 'Sora', sans-serif;
+      font-size: 0.75rem;
+      color: var(--text-dimmer);
+      background: none;
+      border: none;
+      cursor: pointer;
+      transition: color 0.2s;
+    }
+
+    .btn-logout:hover { color: var(--red); }
+
+    .save-msg {
+      font-size: 0.72rem;
+      color: var(--green);
+      text-align: right;
+      min-height: 1rem;
+      margin-bottom: 0.5rem;
+    }
+
+    /* ---- Editor items ---- */
+    .editor-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.5rem 0.6rem;
+      background: rgba(0, 0, 0, 0.25);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      margin-bottom: 0.35rem;
+    }
+
+    .editor-input {
+      flex: 1;
+      min-width: 0;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.4rem 0.55rem;
+      font-family: 'Sora', sans-serif;
+      font-size: 0.72rem;
+      color: #fff;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+
+    .editor-input:focus { border-color: var(--accent); }
+    .editor-input::placeholder { color: var(--text-dimmer); }
+
+    .editor-select {
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 0.4rem 0.4rem;
+      font-family: 'Sora', sans-serif;
+      font-size: 0.68rem;
+      color: #fff;
+      outline: none;
+    }
+
+    .editor-select option { background: #0a1020; }
+
+    .editor-emoji {
+      max-width: 3rem;
+      text-align: center;
+      flex: 0 0 3rem;
+    }
+
+    .editor-num {
+      max-width: 4.5rem;
+      flex: 0 0 4.5rem;
+    }
+
+    .notif-editor-item {
+      flex-wrap: wrap;
+    }
+
+    .editor-actions {
+      display: flex;
+      gap: 0.4rem;
+      margin-top: 0.5rem;
+    }
+
+    .editor-empty {
+      font-size: 0.75rem;
+      color: var(--text-dimmer);
+      padding: 0.4rem 0;
+    }
+
+    .editor-item {
+      align-items: flex-start;
+      flex-wrap: wrap;
+    }
+
+    .editor-item .editor-input {
+      min-height: 2.15rem;
+    }
+
+    @media (max-width: 1100px) {
+      .admin-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .admin-overview {
+        justify-content: flex-start;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .admin-hero {
+        padding: 0.9rem;
+      }
+
+      .admin-group-toggle,
+      .admin-group-body-inner {
+        padding-left: 0.9rem;
+        padding-right: 0.9rem;
+      }
+
+      .admin-section {
+        padding: 0.9rem;
+      }
+
+      .admin-footer {
+        flex-direction: column;
+        align-items: stretch;
+      }
+    }
+
+    .fab-wrap {
+      position: fixed;
+      right: 1.25rem;
+      bottom: 1.25rem;
+      z-index: 30;
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.75rem;
+    }
+
+    .fab-options {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 0.55rem;
+      opacity: 0;
+      transform: translate3d(10px, 10px, 0) scale(0.96);
+      filter: blur(10px);
+      pointer-events: none;
+      transition: opacity 0.35s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), filter 0.35s ease;
+    }
+
+    .fab-wrap.open .fab-options {
+      opacity: 1;
+      transform: translate3d(0, 0, 0) scale(1);
+      filter: blur(0);
+      pointer-events: auto;
+    }
+
+    .fab-option {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.55rem;
+      padding: 0.7rem 0.95rem;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(17, 17, 17, 0.62);
+      color: #f8fbff;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.24);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      font-family: 'Sora', sans-serif;
+      font-size: 0.74rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+    }
+
+    .fab-option:hover {
+      transform: translateX(-2px);
+      background: rgba(17, 17, 17, 0.82);
+      border-color: rgba(96, 165, 250, 0.22);
+    }
+
+    .fab-option i {
+      width: 16px;
+      text-align: center;
+      color: var(--accent);
+    }
+
+    .fab-main {
+      width: 3.1rem;
+      height: 3.1rem;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(17, 17, 17, 0.62);
+      color: #fff;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.24);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: transform 0.3s ease, background 0.2s ease;
+    }
+
+    .fab-main:hover {
+      background: rgba(17, 17, 17, 0.82);
+    }
+
+    .fab-main i {
+      font-size: 1.15rem;
+      transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .fab-wrap.open .fab-main i {
+      transform: rotate(45deg);
+    }
+
+    .fab-hidden {
+      display: none !important;
+    }
+
+    @media (max-width: 640px) {
+      .fab-wrap {
+        right: 0.85rem;
+        bottom: 0.85rem;
+      }
+
+      .fab-option {
+        padding: 0.65rem 0.85rem;
+        font-size: 0.7rem;
+      }
+    }
+
+    /* ============================================
+       ESCAPE-STYLE LOGIN THEME
+       ============================================ */
+    :root {
+      --escape-bg: #020304;
+      --escape-card: rgba(5, 6, 8, 0.52);
+      --escape-border: rgba(255, 255, 255, 0.14);
+      --escape-text: #f3f3f3;
+      --escape-text-dim: rgba(255, 255, 255, 0.67);
+      --escape-pill: rgba(0, 0, 0, 0.38);
+      --escape-pill-border: rgba(255, 255, 255, 0.22);
+    }
+
+    body {
+      font-family: 'Manrope', sans-serif;
+      background: var(--escape-bg);
+      background-image: none;
+    }
+
+    #aurora-bg {
+      display: none;
+    }
+
+    .escape-bg {
+      position: fixed;
+      inset: 0;
+      z-index: -3;
+      overflow: hidden;
+      background: #000;
+    }
+
+    .escape-bg video {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      filter: brightness(0.2) blur(3px) grayscale(0.2);
+      transform: scale(1.05);
+    }
+
+    .escape-bg::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 30% 5%, rgba(255, 255, 255, 0.1), transparent 48%),
+        linear-gradient(to bottom, rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.75));
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .login-card {
+      max-width: 40rem;
+      border-radius: 6px;
+      border: 1px solid var(--escape-border);
+      background: var(--escape-card);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 24px 90px rgba(0, 0, 0, 0.72);
+    }
+
+    .login-card .card-inner {
+      padding: 1.4rem;
+    }
+
+    .login-kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.42rem;
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 0.62rem;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      margin-bottom: 0.7rem;
+    }
+
+    .login-headline {
+      font-family: 'Bebas Neue', sans-serif;
+      font-size: 3rem;
+      line-height: 0.9;
+      letter-spacing: 0.04em;
+      color: #fff;
+      margin-bottom: 0.2rem;
+    }
+
+    .login-copy {
+      color: rgba(255, 255, 255, 0.68);
+      font-size: 0.86rem;
+      line-height: 1.55;
+      margin-bottom: 0.9rem;
+    }
+
+    .escape-login-box {
+      border: 1px solid var(--escape-border);
+      background: rgba(0, 0, 0, 0.35);
+      border-radius: 6px;
+      padding: 0.9rem;
+    }
+
+    .escape-login-box label {
+      color: rgba(255, 255, 255, 0.74);
+      letter-spacing: 0.11em;
+      font-size: 0.65rem;
+    }
+
+    .escape-login-box input[type="password"] {
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.5);
+      color: #fff;
+      font-family: 'Manrope', sans-serif;
+    }
+
+    .escape-login-box input[type="password"]::placeholder {
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .escape-login-box .btn-primary {
+      border-radius: 6px;
+      border-color: rgba(255, 255, 255, 0.38);
+      background: rgba(255, 255, 255, 0.12);
+      color: #fff;
+      font-family: 'Manrope', sans-serif;
+      letter-spacing: 0.14em;
+    }
+
+    .escape-login-box .btn-primary:hover {
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow: none;
+    }
+
+    .login-card .back-link {
+      color: rgba(255, 255, 255, 0.56);
+      margin-top: 0.95rem;
+    }
+
+    .login-card .back-link:hover {
+      color: #fff;
+    }
+
+    @media (max-width: 560px) {
+      .login-card .card-inner {
+        padding: 1rem;
+      }
+
+      .login-headline {
+        font-size: 2.5rem;
+      }
+    }
+
+    /* ============================================
+       ESCAPE ADMIN THEME OVERRIDES
+       ============================================ */
+    .admin-card {
+      max-width: 88rem;
+      border-radius: 6px;
+      border: 1px solid var(--escape-border);
+      background: var(--escape-card);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      box-shadow: 0 24px 90px rgba(0, 0, 0, 0.72);
+    }
+
+    .admin-card .card-inner {
+      padding: 1rem;
+    }
+
+    .admin-hero {
+      border-radius: 6px;
+      border: none;
+      background: rgba(0, 0, 0, 0.34);
+      padding: 0.9rem;
+    }
+
+    .admin-kicker {
+      color: rgba(255, 255, 255, 0.78);
+      font-size: 0.62rem;
+      letter-spacing: 0.13em;
+    }
+
+    .admin-subtitle {
+      color: rgba(255, 255, 255, 0.64);
+      font-size: 0.74rem;
+    }
+
+    .overview-pill {
+      border-radius: 6px;
+      border: none;
+      background: rgba(0, 0, 0, 0.36);
+      min-width: 7.2rem;
+      padding: 0.66rem 0.72rem;
+    }
+
+    .overview-pill span {
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.55rem;
+    }
+
+    .overview-pill strong {
+      font-size: 0.86rem;
+      color: #fff;
+    }
+
+    .admin-grid {
+      gap: 0.8rem;
+    }
+
+    .admin-column {
+      gap: 0.8rem;
+    }
+
+    .admin-group {
+      border-radius: 6px;
+      border: 1px solid var(--escape-border);
+      background: rgba(0, 0, 0, 0.28);
+      box-shadow: none;
+    }
+
+    .admin-group-toggle {
+      border-radius: 0;
+      padding: 0.8rem 0.9rem;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .admin-group-summary strong {
+      font-size: 0.9rem;
+      letter-spacing: 0.01em;
+    }
+
+    .admin-group-summary small {
+      color: rgba(255, 255, 255, 0.52);
+      font-size: 0.68rem;
+    }
+
+    .admin-group-eyebrow {
+      color: rgba(255, 255, 255, 0.75);
+      font-size: 0.57rem;
+      letter-spacing: 0.14em;
+    }
+
+    .admin-group-icon {
+      border-radius: 999px;
+      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.4);
+      color: #fff;
+      width: 1.85rem;
+      height: 1.85rem;
+    }
+
+    .admin-group-body-inner {
+      padding: 0 0.9rem 0.9rem;
+      gap: 0.65rem;
+    }
+
+    .admin-section {
+      border-radius: 6px;
+      border: none;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 0.8rem;
+    }
+
+    .section-title {
+      color: rgba(255, 255, 255, 0.82);
+      font-size: 0.61rem;
+      letter-spacing: 0.13em;
+      border-bottom-color: rgba(255, 255, 255, 0.14);
+      margin-bottom: 0.65rem;
+      padding-bottom: 0.45rem;
+    }
+
+    .form-group {
+      margin-bottom: 0.7rem;
+      gap: 0.32rem;
+    }
+
+    .form-group label,
+    .avatar-hint,
+    .builder-hint,
+    .local-hint,
+    .editor-empty,
+    .music-empty,
+    .feature-copy small,
+    .builder-copy small,
+    .admin-footer .btn-logout {
+      color: rgba(255, 255, 255, 0.56);
+    }
+
+    .form-group input[type="password"],
+    .form-group input[type="url"],
+    .form-group input[type="text"],
+    .textarea-input,
+    .yt-input-row input,
+    .editor-input,
+    .editor-select {
+      border-radius: 6px;
+      border-color: rgba(255, 255, 255, 0.2);
+      background: rgba(0, 0, 0, 0.5);
+      font-family: 'Manrope', sans-serif;
+    }
+
+    .form-group input:focus,
+    .textarea-input:focus,
+    .yt-input-row input:focus,
+    .editor-input:focus,
+    .editor-select:focus {
+      border-color: rgba(255, 255, 255, 0.46);
+      box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-primary,
+    .btn-secondary,
+    .template-chip,
+    .fab-option,
+    .fab-main {
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.24);
+      background: rgba(255, 255, 255, 0.1);
+      color: #fff;
+      font-family: 'Manrope', sans-serif;
+      box-shadow: none;
+    }
+
+    .btn-primary:hover,
+    .btn-secondary:hover,
+    .template-chip:hover,
+    .fab-option:hover,
+    .fab-main:hover {
+      background: rgba(255, 255, 255, 0.18);
+      border-color: rgba(255, 255, 255, 0.34);
+      color: #fff;
+      box-shadow: none;
+      transform: translateY(-1px);
+    }
+
+    .template-chip {
+      font-size: 0.61rem;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      padding: 0.35rem 0.62rem;
+    }
+
+    .feature-item,
+    .builder-item,
+    .music-item,
+    .editor-item {
+      border-radius: 6px;
+      border: none;
+      background: rgba(255, 255, 255, 0.05);
+    }
+
+    .feature-copy strong,
+    .builder-copy strong,
+    .track-name,
+    .admin-group-summary strong,
+    .section-title,
+    .save-msg,
+    .form-error,
+    .yt-status {
+      color: #fff;
+    }
+
+    .track-type-badge.yt,
+    .track-type-badge.loc {
+      border-color: rgba(255, 255, 255, 0.26);
+      color: #fff;
+      background: rgba(255, 255, 255, 0.11);
+    }
+
+    .switch-slider {
+      border-color: rgba(255, 255, 255, 0.24);
+      background: rgba(0, 0, 0, 0.4);
+    }
+
+    .switch input:checked + .switch-slider {
+      background: rgba(255, 255, 255, 0.22);
+      border-color: rgba(255, 255, 255, 0.42);
+      box-shadow: none;
+    }
+
+    .switch-slider::before {
+      background: #fff;
+    }
+
+    hr.section-divider {
+      background: rgba(255, 255, 255, 0.15);
+      margin: 1.2rem 0;
+    }
+
+    .admin-footer {
+      padding: 0;
+    }
+
+    .fab-option i,
+    .fab-main i {
+      color: #fff;
+    }
+
+    @media (max-width: 680px) {
+      .admin-card .card-inner {
+        padding: 0.72rem;
+      }
+
+      .admin-hero,
+      .admin-group-toggle,
+      .admin-group-body-inner,
+      .admin-section {
+        padding-left: 0.72rem;
+        padding-right: 0.72rem;
+      }
+    }
+
+    /* ============================================================
+       RICH TEXT EDITOR (About / Beschreibung)
+       ============================================================ */
+    .rte-wrap {
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 10px;
+      overflow: hidden;
+      background: rgba(255,255,255,.03);
+    }
+    .rte-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 2px;
+      padding: 6px 8px;
+      background: rgba(255,255,255,.05);
+      border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+    .rte-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px; height: 28px;
+      border-radius: 5px;
+      border: none;
+      background: transparent;
+      color: rgba(255,255,255,.55);
+      cursor: pointer;
+      font-size: .75rem;
+      transition: background .15s, color .15s;
+      flex-shrink: 0;
+    }
+    .rte-btn:hover, .rte-btn.rte-active { background: rgba(96,165,250,.15); color: #60a5fa; }
+    .rte-btn-danger:hover { background: rgba(248,113,113,.15); color: #f87171; }
+    .rte-sep { width: 1px; height: 20px; background: rgba(255,255,255,.1); margin: 0 3px; flex-shrink: 0; }
+    .rte-select {
+      height: 28px; padding: 0 5px;
+      border-radius: 5px;
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.7);
+      font-size: .71rem;
+      cursor: pointer; outline: none;
+      max-width: 110px;
+    }
+    .rte-select option { background: #14182a; color: #e0e0e0; }
+    .rte-color-wrap {
+      display: flex; align-items: center; gap: 4px;
+      padding: 0 6px; height: 28px;
+      border-radius: 5px;
+      border: 1px solid rgba(255,255,255,.1);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.6);
+      font-size: .75rem;
+      cursor: pointer;
+    }
+    .rte-color-wrap input[type="color"] {
+      width: 16px; height: 16px;
+      border: none; padding: 0;
+      background: none; cursor: pointer;
+      border-radius: 3px;
+    }
+    .rte-editor {
+      min-height: 90px; max-height: 220px;
+      overflow-y: auto;
+      padding: 10px 13px;
+      font-size: .85rem;
+      color: rgba(255,255,255,.85);
+      line-height: 1.75;
+      outline: none;
+      font-family: 'Manrope', sans-serif;
+    }
+    .rte-editor:empty::before {
+      content: attr(data-placeholder);
+      color: rgba(255,255,255,.22);
+      pointer-events: none;
+    }
+    .rte-preview-bar {
+      padding: 3px 12px;
+      font-size: .62rem;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.28);
+      background: rgba(255,255,255,.03);
+      border-top: 1px solid rgba(255,255,255,.07);
+    }
+    .rte-preview {
+      min-height: 36px;
+      padding: 10px 14px;
+      font-size: .85rem;
+      line-height: 1.75;
+      color: rgba(255,255,255,.48);
+      text-align: center;
+      background: rgba(0,0,0,.22);
+    }
+    /* Animation keyframes (shared with index) */
+    @keyframes tx-gradient-flow { 0%{background-position:0%} 100%{background-position:200%} }
+    @keyframes tx-glow-pulse { 0%,100%{text-shadow:0 0 4px currentColor} 50%{text-shadow:0 0 14px currentColor,0 0 28px currentColor} }
+    @keyframes tx-shimmer-move { 0%{background-position:200% center} 100%{background-position:-200% center} }
+    @keyframes tx-fade-pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+    .tx-gradient { background: linear-gradient(90deg,#60a5fa,#c084fc,#f472b6,#60a5fa); background-size:200%; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; animation:tx-gradient-flow 3s linear infinite; }
+    .tx-glow { animation: tx-glow-pulse 2s ease-in-out infinite; }
+    .tx-shimmer { background: linear-gradient(90deg,rgba(255,255,255,.15) 0%,rgba(255,255,255,.85) 45%,rgba(255,255,255,.15) 90%); background-size:300% auto; -webkit-background-clip:text; background-clip:text; -webkit-text-fill-color:transparent; animation:tx-shimmer-move 2.2s linear infinite; }
+    .tx-fade { animation: tx-fade-pulse 2.2s ease-in-out infinite; }
+  </style>
+</head>
+<body>
+
+  <div class="escape-bg" aria-hidden="true">
+    <video autoplay loop muted playsinline>
+      <source src="https://r2-bios.e-z.host/b7bf534a-961e-47af-a3b0-cfdc271b20cf/mysdu21mrh.mp4" type="video/mp4" />
+    </video>
+  </div>
+
+  <div id="aurora-bg"></div>
+
+  <div class="splash" id="splash">
+    <svg viewBox="-2 -2 44 44" width="80" height="80">
+      <path
+        stroke="rgba(96,165,250,0.15)" fill="none" stroke-width="4" pathLength="100"
+        d="M29.76 18.72 c0 7.28-3.92 13.6-9.84 16.96 c-2.88 1.68-6.24 2.64-9.84 2.64 c-3.6 0-6.88-0.96-9.76-2.64 c0-7.28 3.92-13.52 9.84-16.96 c2.88-1.68 6.24-2.64 9.76-2.64 S26.88 17.04 29.76 18.72 c5.84 3.36 9.76 9.68 9.84 16.96 c-2.88 1.68-6.24 2.64-9.76 2.64 c-3.6 0-6.88-0.96-9.84-2.64 c-5.84-3.36-9.76-9.68-9.76-16.96 c0-7.28 3.92-13.6 9.76-16.96 C25.84 5.12 29.76 11.44 29.76 18.72z"
+      />
+      <path
+        stroke="#60a5fa" fill="none" stroke-width="4"
+        stroke-dasharray="15, 85" stroke-dashoffset="0" stroke-linecap="round"
+        pathLength="100"
+        style="animation: infinity-loader-travel 2s linear infinite;"
+        d="M29.76 18.72 c0 7.28-3.92 13.6-9.84 16.96 c-2.88 1.68-6.24 2.64-9.84 2.64 c-3.6 0-6.88-0.96-9.76-2.64 c0-7.28 3.92-13.52 9.84-16.96 c2.88-1.68 6.24-2.64 9.76-2.64 S26.88 17.04 29.76 18.72 c5.84 3.36 9.76 9.68 9.84 16.96 c-2.88 1.68-6.24 2.64-9.76 2.64 c-3.6 0-6.88-0.96-9.84-2.64 c-5.84-3.36-9.76-9.68-9.76-16.96 c0-7.28 3.92-13.6 9.76-16.96 C25.84 5.12 29.76 11.44 29.76 18.72z"
+      />
+    </svg>
+    <span class="splash-text">Wird geladen…</span>
+  </div>
+
+  <!-- LOGIN FORM -->
+  <div class="card login-card panel-screen is-visible" id="login-section">
+    <div class="card-inner">
+      <p class="login-kicker"><i class="fa-solid fa-lock"></i> Sicherer Zugang</p>
+      <h1 class="login-headline">Admin Login</h1>
+      <p class="login-copy">Dieser Bereich ist nur fuer berechtigte Nutzer. Bitte Passwort eingeben, um das Admin-Panel zu oeffnen.</p>
+
+      <form id="login-form" autocomplete="off" class="escape-login-box">
+        <div class="form-group">
+          <label for="passwd">Passwort</label>
+          <input type="password" id="passwd" placeholder="Passwort eingeben" autofocus />
+        </div>
+        <p class="form-error" id="login-error"></p>
+        <button type="submit" class="btn-primary">Weiter zum Panel</button>
+      </form>
+      <a href="index.html" class="back-link">← zurück zur Startseite</a>
+    </div>
+  </div>
+
+  <!-- ADMIN PANEL (hidden until logged in) -->
+  <div class="card admin-card panel-screen" id="admin-section" style="display:none;">
+    <div class="card-inner">
+      <div class="admin-shell">
+        <div class="admin-hero">
+          <div>
+            <p class="admin-kicker">Control Deck</p>
+            <h2>Admin Panel</h2>
+            <p class="subtitle admin-subtitle">Breiter, strukturierter und mit aufklappbaren Modulen für schnellere Pflege von Profil, Pipeline und Content.</p>
+          </div>
+          <div class="admin-overview">
+            <div class="overview-pill">
+              <span>Status</span>
+              <strong id="overview-profile-status">Live</strong>
+            </div>
+            <div class="overview-pill">
+              <span>Manga</span>
+              <strong id="overview-manga-count">0 Einträge</strong>
+            </div>
+            <div class="overview-pill">
+              <span>Tracks</span>
+              <strong id="overview-track-count">0 Tracks</strong>
+            </div>
+            <div class="overview-pill">
+              <span>Skills</span>
+              <strong id="overview-skill-count">0 Skills</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="admin-grid">
+          <div class="admin-column">
+            <div class="admin-group open" data-group>
+              <button type="button" class="admin-group-toggle" data-group-toggle>
+                <span class="admin-group-summary">
+                  <span class="admin-group-eyebrow">Identity</span>
+                  <strong>Profil & Zugang</strong>
+                  <small>Avatar, Name, Socials und Passwortverwaltung</small>
+                </span>
+                <span class="admin-group-icon"><i class="fa-solid fa-chevron-down"></i></span>
+              </button>
+              <div class="admin-group-body">
+                <div class="admin-group-body-inner">
+                  <div class="admin-section">
+                    <div class="section-title">Profilbild</div>
+                    <div class="avatar-row">
+                      <div class="avatar-preview" id="admin-avatar-preview">AF</div>
+                      <div>
+                        <button type="button" class="btn-secondary" onclick="document.getElementById('avatar-input').click()">
+                          Bild auswählen
+                        </button>
+                        <input type="file" id="avatar-input" accept="image/*" />
+                        <p class="avatar-hint">Wird lokal gespeichert (Base64)</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="admin-section">
+                    <div class="section-title">Profil-Text</div>
+                    <div class="form-group">
+                      <label for="prof-name">Name</label>
+                      <input type="text" id="prof-name" placeholder="AniFix" />
+                    </div>
+                    <div class="form-group">
+                      <label for="prof-alias">Alias</label>
+                      <input type="text" id="prof-alias" placeholder="aka Sumo" />
+                    </div>
+                    <div class="form-group">
+                      <label for="prof-titles">Rotierende Titel (einer pro Zeile)</label>
+                      <textarea class="textarea-input" id="prof-titles" rows="4" placeholder="🎮 Gamer&#10;🖥️ Homelab Tinkerer"></textarea>
+                    </div>
+                    <div class="template-row">
+                      <button type="button" class="template-chip" data-template="titles-builder">Builder Titles</button>
+                      <button type="button" class="template-chip" data-template="titles-pipeline">Pipeline Titles</button>
+                    </div>
+                  </div>
+
+                  <div class="admin-section">
+                    <div class="section-title">Soziale Links</div>
+                    <div class="form-group">
+                      <label for="social-discord-input">Discord User-ID <small style="opacity:.6;font-weight:400">(z.B. 123456789012345678)</small></label>
+                      <input type="text" id="social-discord-input" placeholder="Discord User-ID" />
+                    </div>
+                    <div class="form-group">
+                      <label for="social-github-input">GitHub URL</label>
+                      <input type="url" id="social-github-input" placeholder="https://github.com/..." />
+                    </div>
+                  </div>
+
+                  <div class="admin-section">
+                    <div class="section-title">Passwort ändern</div>
+                    <div class="form-group">
+                      <label for="new-pw">Neues Passwort</label>
+                      <input type="password" id="new-pw" placeholder="neues Passwort" />
+                    </div>
+                    <div class="form-group">
+                      <label for="new-pw2">Wiederholen</label>
+                      <input type="password" id="new-pw2" placeholder="••••••••" />
+                    </div>
+                    <p class="form-error" id="pw-error"></p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="admin-group open" data-group>
+              <button type="button" class="admin-group-toggle" data-group-toggle>
+                <span class="admin-group-summary">
+                  <span class="admin-group-eyebrow">Content</span>
+                  <strong>Texte & Hinweise</strong>
+                  <small>Beschreibung, Tags, Standort und Hinweis-Block</small>
+                </span>
+                <span class="admin-group-icon"><i class="fa-solid fa-chevron-down"></i></span>
+              </button>
+              <div class="admin-group-body">
+                <div class="admin-group-body-inner">
+                  <div class="admin-section">
+                    <div class="section-title">Beschreibung & Tags</div>
+                    <div class="form-group">
+                      <label>Beschreibung <small style="opacity:.6;font-weight:400">Live Editor</small></label>
+                      <div class="rte-wrap">
+                        <!-- Toolbar -->
+                        <div class="rte-toolbar">
+                          <button type="button" class="rte-btn" data-cmd="bold" title="Fett (Strg+B)"><i class="fa-solid fa-bold"></i></button>
+                          <button type="button" class="rte-btn" data-cmd="italic" title="Kursiv (Strg+I)"><i class="fa-solid fa-italic"></i></button>
+                          <button type="button" class="rte-btn" data-cmd="underline" title="Unterstrichen"><i class="fa-solid fa-underline"></i></button>
+                          <span class="rte-sep"></span>
+                          <select class="rte-select" id="rte-fontfamily" title="Schriftart">
+                            <option value="">Schrift…</option>
+                            <option value="Manrope, sans-serif">Manrope</option>
+                            <option value="'Bebas Neue', cursive">Bebas Neue</option>
+                            <option value="monospace">Mono</option>
+                            <option value="serif">Serif</option>
+                            <option value="Georgia, serif">Georgia</option>
+                          </select>
+                          <select class="rte-select" id="rte-fontsize" title="Schriftgröße">
+                            <option value="">Größe…</option>
+                            <option value="0.65rem">XS</option>
+                            <option value="0.75rem">S</option>
+                            <option value="0.85rem">M</option>
+                            <option value="1rem">L</option>
+                            <option value="1.2rem">XL</option>
+                            <option value="1.5rem">2XL</option>
+                          </select>
+                          <span class="rte-sep"></span>
+                          <label class="rte-color-wrap" title="Textfarbe">
+                            <i class="fa-solid fa-palette"></i>
+                            <input type="color" id="rte-color" value="#e0e0e0" />
+                          </label>
+                          <span class="rte-sep"></span>
+                          <button type="button" class="rte-btn" id="rte-link-btn" title="Link einfügen"><i class="fa-solid fa-link"></i></button>
+                          <button type="button" class="rte-btn" id="rte-unlink-btn" title="Link entfernen"><i class="fa-solid fa-link-slash"></i></button>
+                          <span class="rte-sep"></span>
+                          <select class="rte-select" id="rte-animation" title="Animation">
+                            <option value="">Animation…</option>
+                            <option value="tx-gradient">Gradient Flow</option>
+                            <option value="tx-glow">Glow Pulse</option>
+                            <option value="tx-shimmer">Shimmer</option>
+                            <option value="tx-fade">Fade Pulse</option>
+                          </select>
+                          <button type="button" class="rte-btn rte-btn-danger" id="rte-clear-btn" title="Formatierung entfernen"><i class="fa-solid fa-eraser"></i></button>
+                        </div>
+                        <!-- Editor -->
+                        <div class="rte-editor" id="about-rte" contenteditable="true" spellcheck="false" data-placeholder="Beschreibung eingeben…"></div>
+                        <!-- Live Preview -->
+                        <div class="rte-preview-bar">Live-Vorschau</div>
+                        <div class="rte-preview about" id="about-rte-preview"></div>
+                      </div>
+                    </div>
+                    <div class="form-group">
+                      <label for="about-tags-input">Tags (kommagetrennt)</label>
+                      <input type="text" id="about-tags-input" placeholder="Gamer, Homelab, Tinkerer, AI Dev" />
+                    </div>
+                    <div class="template-row">
+                      <button type="button" class="template-chip" data-template="about-tech">Tech Template</button>
+                      <button type="button" class="template-chip" data-template="about-creator">Creator Template</button>
+                    </div>
+                  </div>
+
+                  <div class="admin-section">
+                    <div class="section-title">Standort</div>
+                    <div class="form-group">
+                      <label>Standort-Text &amp; Flagge</label>
+                      <div class="location-row">
+                        <select id="location-flag-select" title="Flagge / Land">
+                          <option value="">🌍</option>
+                          <option value="🇩🇪">🇩🇪 DE</option>
+                          <option value="🇦🇹">🇦🇹 AT</option>
+                          <option value="🇨🇭">🇨🇭 CH</option>
+                          <option value="🇺🇸">🇺🇸 US</option>
+                          <option value="🇬🇧">🇬🇧 GB</option>
+                          <option value="🇫🇷">🇫🇷 FR</option>
+                          <option value="🇪🇸">🇪🇸 ES</option>
+                          <option value="🇮🇹">🇮🇹 IT</option>
+                          <option value="🇳🇱">🇳🇱 NL</option>
+                          <option value="🇵🇱">🇵🇱 PL</option>
+                          <option value="🇷🇺">🇷🇺 RU</option>
+                          <option value="🇹🇷">🇹🇷 TR</option>
+                          <option value="🇯🇵">🇯🇵 JP</option>
+                          <option value="🇰🇷">🇰🇷 KR</option>
+                          <option value="🇨🇳">🇨🇳 CN</option>
+                          <option value="🇮🇳">🇮🇳 IN</option>
+                          <option value="🇧🇷">🇧🇷 BR</option>
+                          <option value="🇨🇦">🇨🇦 CA</option>
+                          <option value="🇦🇺">🇦🇺 AU</option>
+                          <option value="🇲🇽">🇲🇽 MX</option>
+                        </select>
+                        <input type="text" id="location-input" placeholder="Ansässig in Deutschland" style="flex:1" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="admin-section">
+                    <div class="section-title">Hinweis-Text</div>
+                    <div class="form-group">
+                      <label for="hint-title-input">Titel</label>
+                      <input type="text" id="hint-title-input" placeholder="⚠️ Hinweis" />
+                    </div>
+                    <div class="form-group">
+                      <label for="hint-text-input">Text</label>
+                      <textarea class="textarea-input" id="hint-text-input" rows="3" placeholder="Diese Seite ist privat..."></textarea>
+                    </div>
+                    <div class="template-row">
+                      <button type="button" class="template-chip" data-template="hint-private">Privat-Hinweis</button>
+                      <button type="button" class="template-chip" data-template="hint-wip">WIP-Hinweis</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="admin-column">
+            <div class="admin-group open" data-group>
+              <button type="button" class="admin-group-toggle" data-group-toggle>
+                <span class="admin-group-summary">
+                  <span class="admin-group-eyebrow">Pipeline</span>
+                  <strong>Manga, Musik & Skills</strong>
+                  <small>Collections, Medien und visuelle Module in einem Bereich</small>
+                </span>
+                <span class="admin-group-icon"><i class="fa-solid fa-chevron-down"></i></span>
+              </button>
+              <div class="admin-group-body">
+                <div class="admin-group-body-inner">
+                  <div class="admin-section">
+                    <div class="section-title">Manga Pipeline</div>
+                    <div id="manga-list"></div>
+                    <div class="template-row">
+                      <button type="button" class="template-chip" data-template="manga-starter">Starter Pipeline</button>
+                      <button type="button" class="template-chip" data-template="manga-release">Release Sprint</button>
+                    </div>
+                    <div class="editor-actions">
+                      <button type="button" class="btn-secondary" id="add-manga-btn">+ Eintrag</button>
+                      <button type="button" class="btn-secondary" id="reset-manga-btn">Zurücksetzen</button>
+                    </div>
+                  </div>
+
+                  <div class="admin-section">
+                    <div class="section-title">Hintergrundmusik</div>
+                    <ul class="music-list" id="music-list"></ul>
+                    <p class="music-empty" id="music-empty" style="display:none;">Noch keine Tracks hinzugefügt.</p>
+
+                    <div class="yt-input-row">
+                      <input type="url" id="yt-url-input" placeholder="https://www.youtube.com/watch?v=..." />
+                      <button type="button" class="btn-secondary" id="yt-add-btn">&#8681; YouTube</button>
+                    </div>
+                    <p class="yt-status" id="yt-status"></p>
+
+                    <div class="local-row">
+                      <button type="button" class="btn-secondary" onclick="document.getElementById('music-input').click()">
+                        + Lokale Datei
+                      </button>
+                      <input type="file" id="music-input" accept="audio/*" multiple />
+                      <span class="local-hint">MP3, OGG, WAV</span>
+                    </div>
+                  </div>
+
+                  <div class="admin-section">
+                    <div class="section-title">Orbiting Skills</div>
+                    <div class="form-group">
+                      <label for="skills-heading-input">Überschrift <small style="opacity:.6;font-weight:400">(optional)</small></label>
+                      <input type="text" id="skills-heading-input" placeholder="Mein Skill Set" maxlength="60" />
+                    </div>
+                    <div id="skills-list"></div>
+                    <div class="editor-actions">
+                      <button type="button" class="btn-secondary" id="add-skill-btn">+ Skill</button>
+                      <button type="button" class="btn-secondary" id="reset-skills-btn">Zurücksetzen</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="admin-group open" data-group>
+              <button type="button" class="admin-group-toggle" data-group-toggle>
+                <span class="admin-group-summary">
+                  <span class="admin-group-eyebrow">Signals</span>
+                  <strong>Willkommens-Toasts</strong>
+                  <small>Feintuning für die ersten Sekunden der Startseite</small>
+                </span>
+                <span class="admin-group-icon"><i class="fa-solid fa-chevron-down"></i></span>
+              </button>
+              <div class="admin-group-body">
+                <div class="admin-group-body-inner">
+                  <div class="admin-section">
+                    <div class="section-title">Toast Einstellungen</div>
+                    <div class="toast-config-grid">
+                      <div class="form-group">
+                        <label for="toast-mode-select">Modus</label>
+                        <select class="editor-select" id="toast-mode-select" style="width:100%">
+                          <option value="sequential">Alle nacheinander</option>
+                          <option value="random">Zufällig (1 Toast)</option>
+                          <option value="single">Nur erster Toast</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label for="toast-anim-select">Animation</label>
+                        <select class="editor-select" id="toast-anim-select" style="width:100%">
+                          <option value="slide">Einfliegen (rechts)</option>
+                          <option value="fade">Einblenden</option>
+                          <option value="bounce">Einfliegen (Bounce)</option>
+                          <option value="scale">Skalieren</option>
+                        </select>
+                      </div>
+                      <div class="form-group">
+                        <label for="toast-duration-input">Anzeigedauer (ms)</label>
+                        <input type="number" class="editor-input" id="toast-duration-input" value="5500" min="1000" step="500" style="width:100%" />
+                      </div>
+                      <div class="form-group">
+                        <label for="toast-gap-input">Verzögerung zw. Toasts (ms)</label>
+                        <input type="number" class="editor-input" id="toast-gap-input" value="0" min="0" step="200" style="width:100%" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="admin-section">
+                    <div class="section-title">Toast Inhalte</div>
+                    <div id="notifs-list"></div>
+                    <div class="editor-actions">
+                      <button type="button" class="btn-secondary" id="add-notif-btn">+ Toast</button>
+                      <button type="button" class="btn-secondary" id="reset-notifs-btn">Zurücksetzen</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="admin-group open" data-group>
+              <button type="button" class="admin-group-toggle" data-group-toggle>
+                <span class="admin-group-summary">
+                  <span class="admin-group-eyebrow">Features</span>
+                  <strong>Features & Builder</strong>
+                  <small>Schalter, Linkpage und Reihenfolge der Startseiten-Blöcke</small>
+                </span>
+                <span class="admin-group-icon"><i class="fa-solid fa-chevron-down"></i></span>
+              </button>
+              <div class="admin-group-body">
+                <div class="admin-group-body-inner">
+                  <div class="admin-section">
+                    <div class="section-title">Feature Schalter</div>
+                    <div class="feature-list">
+                      <label class="feature-item">
+                        <span class="feature-copy">
+                          <strong>Splash Loader</strong>
+                          <small>Start-Animation auf Startseite und Login.</small>
+                        </span>
+                        <span class="switch"><input type="checkbox" data-feature-key="splashLoader" id="feature-splash"><span class="switch-slider"></span></span>
+                      </label>
+                      <label class="feature-item">
+                        <span class="feature-copy">
+                          <strong>Avatar Glow</strong>
+                          <small>Dezente Leuchtlinie um das Profilbild.</small>
+                        </span>
+                        <span class="switch"><input type="checkbox" data-feature-key="avatarGlow" id="feature-avatar-glow"><span class="switch-slider"></span></span>
+                      </label>
+                      <label class="feature-item">
+                        <span class="feature-copy">
+                          <strong>Home Quick Menu</strong>
+                          <small>Plus-Menü unten rechts auf der Startseite.</small>
+                        </span>
+                        <span class="switch"><input type="checkbox" data-feature-key="homeQuickMenu" id="feature-home-fab"><span class="switch-slider"></span></span>
+                      </label>
+                      <label class="feature-item">
+                        <span class="feature-copy">
+                          <strong>Manga Tab</strong>
+                          <small>Manga Pipeline als eigener Bereich auf der Startseite.</small>
+                        </span>
+                        <span class="switch"><input type="checkbox" data-feature-key="mangaTab" id="feature-manga"><span class="switch-slider"></span></span>
+                      </label>
+                      <label class="feature-item">
+                        <span class="feature-copy">
+                          <strong>Linkpage</strong>
+                          <small>Zusätzlicher Link-Hub mit Socials und Quick Links.</small>
+                        </span>
+                        <span class="switch"><input type="checkbox" data-feature-key="linkPage" id="feature-linkpage"><span class="switch-slider"></span></span>
+                      </label>
+                      <label class="feature-item">
+                        <span class="feature-copy">
+                          <strong>Willkommens-Toasts</strong>
+                          <small>Benachrichtigungen oben rechts beim Seitenstart.</small>
+                        </span>
+                        <span class="switch"><input type="checkbox" data-feature-key="notifications" id="feature-toasts"><span class="switch-slider"></span></span>
+                      </label>
+                      <label class="feature-item">
+                        <span class="feature-copy">
+                          <strong>Music Player</strong>
+                          <small>Player-Leiste mit Auto-Play und Track-Steuerung.</small>
+                        </span>
+                        <span class="switch"><input type="checkbox" data-feature-key="musicPlayer" id="feature-music"><span class="switch-slider"></span></span>
+                      </label>
+                      <label class="feature-item">
+                        <span class="feature-copy">
+                          <strong>Orbit Skills</strong>
+                          <small>Orbiting Skills als animierter Showcase.</small>
+                        </span>
+                        <span class="switch"><input type="checkbox" data-feature-key="orbitSkills" id="feature-orbit"><span class="switch-slider"></span></span>
+                      </label>
+                    </div>
+                  </div>
+
+                  <div class="admin-section">
+                    <div class="section-title">Linkpage</div>
+                    <div id="linkpage-list"></div>
+                    <div class="editor-actions">
+                      <button type="button" class="btn-secondary" id="add-link-btn">+ Link</button>
+                      <button type="button" class="btn-secondary" id="reset-links-btn">Zurücksetzen</button>
+                    </div>
+                  </div>
+
+                  <div class="admin-section">
+                    <div class="section-title">Startseiten Builder</div>
+                    <div class="builder-list" id="section-builder-list"></div>
+                    <p class="builder-hint">Drag and Drop ändert die Reihenfolge von Hero, Skills, About, Standort und Hinweis auf der Startseite.</p>
+                    <div class="editor-actions">
+                      <button type="button" class="btn-secondary" id="reset-builder-btn">Reihenfolge zurücksetzen</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <hr class="section-divider" />
+        <p class="save-msg" id="save-msg"></p>
+        <div class="admin-footer">
+          <button type="button" class="btn-logout" id="btn-logout">Abmelden</button>
+          <button type="button" class="btn-primary" id="btn-save" style="width:auto;padding:0.65rem 2rem;">Speichern</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="fab-wrap" id="fab-wrap">
+    <div class="fab-options" id="fab-options">
+      <button type="button" class="fab-option" data-fab-action="home">
+        <i class="fa-solid fa-house"></i>
+        <span>Startseite</span>
+      </button>
+      <button type="button" class="fab-option" data-fab-action="focus-login" id="fab-focus-login">
+        <i class="fa-solid fa-keyboard"></i>
+        <span>Login fokussieren</span>
+      </button>
+      <button type="button" class="fab-option fab-hidden" data-fab-action="save" id="fab-save">
+        <i class="fa-solid fa-floppy-disk"></i>
+        <span>Speichern</span>
+      </button>
+      <button type="button" class="fab-option fab-hidden" data-fab-action="logout" id="fab-logout">
+        <i class="fa-solid fa-right-from-bracket"></i>
+        <span>Abmelden</span>
+      </button>
+    </div>
+    <button type="button" class="fab-main" id="fab-main" aria-label="Quick Actions öffnen">
+      <i class="fa-solid fa-plus"></i>
+    </button>
+  </div>
+
+  <script src="src/admin.js"></script>
+</body>
+</html>

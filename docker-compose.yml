@@ -1,0 +1,18 @@
+services:
+  anifix:
+    build: .
+    container_name: anifix
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      # Musik-Downloads persistent speichern
+      - music_data:/app/public/music
+      # cookies.txt von außen einbinden (für YouTube-Zugriff)
+      - ./cookies.txt:/app/cookies.txt:ro
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+
+volumes:
+  music_data:
