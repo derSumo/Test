@@ -2222,37 +2222,36 @@
       var form = document.getElementById('login-form');
       var pwInput = document.getElementById('passwd');
       var errEl = document.getElementById('login-error');
-      var loginSection = document.getElementById('login-section');
-      var adminSection = document.getElementById('admin-section');
       if (!form || !pwInput) return;
+      var retriedAdminScript = false;
+
+      function tryReloadAdminScript() {
+        if (retriedAdminScript) return;
+        retriedAdminScript = true;
+        var oldScript = document.getElementById('admin-js');
+        var retry = document.createElement('script');
+        retry.src = 'src/admin.js?v=' + Date.now();
+        retry.id = 'admin-js-retry';
+        document.body.appendChild(retry);
+        if (oldScript && oldScript.parentNode) {
+          oldScript.parentNode.removeChild(oldScript);
+        }
+      }
 
       form.addEventListener('submit', function (e) {
-        // If admin.js is active, it owns login handling.
-        if (window.__anifixAdminBootstrapped) return;
-        e.preventDefault();
-
-        var input = pwInput.value;
-        var stored = 'anifix2024';
-        try {
-          stored = localStorage.getItem('anifix_pw') || 'anifix2024';
-        } catch (err) {}
-
-        if (input === stored) {
-          try { sessionStorage.setItem('anifix_auth', '1'); } catch (err) {}
+        if (window.__anifixAdminBootstrapped) {
           if (errEl) errEl.textContent = '';
-          if (loginSection) loginSection.style.display = 'none';
-          if (adminSection) {
-            adminSection.style.display = '';
-            adminSection.classList.add('is-visible');
-            adminSection.classList.remove('is-hidden');
-          }
-        } else {
-          if (errEl) errEl.textContent = '// Zugang verweigert.';
-          pwInput.value = '';
+          return;
         }
+
+        e.preventDefault();
+        if (errEl) {
+          errEl.textContent = '// Admin-Script nicht bereit. Bitte 2-3s warten, dann erneut versuchen.';
+        }
+        tryReloadAdminScript();
       });
     })();
   </script>
-  <script src="src/admin.js"></script>
+  <script src="src/admin.js" id="admin-js"></script>
 </body>
 </html>
