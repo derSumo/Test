@@ -2217,41 +2217,6 @@
     </button>
   </div>
 
-  <script>
-    (function () {
-      var form = document.getElementById('login-form');
-      var pwInput = document.getElementById('passwd');
-      var errEl = document.getElementById('login-error');
-      if (!form || !pwInput) return;
-      var retriedAdminScript = false;
-
-      function tryReloadAdminScript() {
-        if (retriedAdminScript) return;
-        retriedAdminScript = true;
-        var oldScript = document.getElementById('admin-js');
-        var retry = document.createElement('script');
-        retry.src = 'src/admin.js?v=' + Date.now();
-        retry.id = 'admin-js-retry';
-        document.body.appendChild(retry);
-        if (oldScript && oldScript.parentNode) {
-          oldScript.parentNode.removeChild(oldScript);
-        }
-      }
-
-      form.addEventListener('submit', function (e) {
-        if (window.__anifixAdminBootstrapped) {
-          if (errEl) errEl.textContent = '';
-          return;
-        }
-
-        e.preventDefault();
-        if (errEl) {
-          errEl.textContent = '// Admin-Script nicht bereit. Bitte 2-3s warten, dann erneut versuchen.';
-        }
-        tryReloadAdminScript();
-      });
-    })();
-  </script>
-  <script src="src/admin.js" id="admin-js"></script>
+  <script src="src/admin.js"></script>
 </body>
 </html>
