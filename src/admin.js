@@ -3,6 +3,7 @@
    ============================================= */
 
 document.addEventListener('DOMContentLoaded', function () {
+  window.__anifixAdminBootstrapped = true;
   const DEFAULT_HASH = 'anifix2024';
   const PW_KEY = 'anifix_pw';
   const TRACKS_KEY = 'anifix_tracks';

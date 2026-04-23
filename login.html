@@ -1728,7 +1728,7 @@
       <h1 class="login-headline">Admin Login</h1>
       <p class="login-copy">Dieser Bereich ist nur fuer berechtigte Nutzer. Bitte Passwort eingeben, um das Admin-Panel zu oeffnen.</p>
 
-      <form id="login-form" autocomplete="off" class="escape-login-box">
+      <form id="login-form" action="javascript:void(0)" autocomplete="off" class="escape-login-box">
         <div class="form-group">
           <label for="passwd">Passwort</label>
           <input type="password" id="passwd" placeholder="Passwort eingeben" autofocus />
@@ -2217,6 +2217,42 @@
     </button>
   </div>
 
+  <script>
+    (function () {
+      var form = document.getElementById('login-form');
+      var pwInput = document.getElementById('passwd');
+      var errEl = document.getElementById('login-error');
+      var loginSection = document.getElementById('login-section');
+      var adminSection = document.getElementById('admin-section');
+      if (!form || !pwInput) return;
+
+      form.addEventListener('submit', function (e) {
+        // If admin.js is active, it owns login handling.
+        if (window.__anifixAdminBootstrapped) return;
+        e.preventDefault();
+
+        var input = pwInput.value;
+        var stored = 'anifix2024';
+        try {
+          stored = localStorage.getItem('anifix_pw') || 'anifix2024';
+        } catch (err) {}
+
+        if (input === stored) {
+          try { sessionStorage.setItem('anifix_auth', '1'); } catch (err) {}
+          if (errEl) errEl.textContent = '';
+          if (loginSection) loginSection.style.display = 'none';
+          if (adminSection) {
+            adminSection.style.display = '';
+            adminSection.classList.add('is-visible');
+            adminSection.classList.remove('is-hidden');
+          }
+        } else {
+          if (errEl) errEl.textContent = '// Zugang verweigert.';
+          pwInput.value = '';
+        }
+      });
+    })();
+  </script>
   <script src="src/admin.js"></script>
 </body>
 </html>
