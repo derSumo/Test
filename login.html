@@ -1699,6 +1699,27 @@
     </svg>
     <span class="splash-text">Wird geladen…</span>
   </div>
+  <script>
+    // Inline-Fallback: Splash wird unabhängig von admin.js entfernt.
+    // Sichert gegen CDN-Timeouts und JS-Fehler in admin.js ab.
+    (function () {
+      var sp = document.getElementById('splash');
+      if (!sp) return;
+      var dismissed = false;
+      function dismissSplash() {
+        if (dismissed) return;
+        dismissed = true;
+        sp.classList.add('hide');
+        setTimeout(function () { if (sp.parentNode) sp.parentNode.removeChild(sp); }, 700);
+      }
+      // Harter Fallback: spätestens nach 3.5s weg, egal was passiert
+      var hard = setTimeout(dismissSplash, 3500);
+      window.addEventListener('load', function () {
+        clearTimeout(hard);
+        setTimeout(dismissSplash, 400);
+      });
+    })();
+  </script>
 
   <!-- LOGIN FORM -->
   <div class="card login-card panel-screen is-visible" id="login-section">

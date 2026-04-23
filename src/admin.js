@@ -546,30 +546,14 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
   function initLoginSplash() {
-    var splash = $('splash');
+    // Splash-Dismissal wird jetzt per Inline-Script in login.html gehandelt.
+    // Diese Funktion bleibt als Stub erhalten für den Feature-Toggle (splashLoader).
+    var splash = document.getElementById('splash');
     var features = getFeatures();
     if (!splash) return;
     if (!features.splashLoader) {
       splash.remove();
-      return;
     }
-    var MIN_SPLASH = 1200;
-    var MAX_WAIT   = 4000; // Notfall-Fallback
-    var start = performance.now();
-    var done = false;
-    function dismissSplash() {
-      if (done) return;
-      done = true;
-      splash.classList.add('hide');
-      setTimeout(function () { splash.remove(); }, 700);
-    }
-    var fallback = setTimeout(dismissSplash, MAX_WAIT);
-    window.addEventListener('load', function () {
-      clearTimeout(fallback);
-      var elapsed = performance.now() - start;
-      var remaining = Math.max(0, MIN_SPLASH - elapsed);
-      setTimeout(dismissSplash, remaining);
-    });
   }
 
   function initFloatingMenu() {
